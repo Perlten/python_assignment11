@@ -7,13 +7,13 @@ import time
 import sys
 
 def take_picture():
-    # making sure to use the global caption variable 
-    global caption
+    # making sure to use the global image variable 
+    global image
 
     # converting color output
-    caption = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    plt.imshow(caption)
+    plt.imshow(image)
     plt.show()
 
 def handle_inputs():
@@ -41,56 +41,68 @@ def handle_inputs():
         time.sleep(0.4)
 
 
-cap = cv2.VideoCapture(0)
 
-# auto-take photos
-auto = False
+if __name__ == "__main__":
+    # Constants
+    DELTA_FREQUENCY = 30
+    KEYFRAME_DELTA_SENSITIVITY = 0.82 
+    MOVEMENT_SENSITIVITY = 1.91
 
-# frames
-key_frame = []
-last_frame = []
-caption = []
-last_delta = 0
+    cap = cv2.VideoCapture(0)
 
-while True:
-    # get frame
-    ret, frame = cap.read()
-    # convert to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # auto-take photos
+    auto = True
 
-    if len(key_frame) == 0:
-        key_frame = gray
+    # frames
+    key_frame = []
+    last_frame = []
+    image = []
+    last_delta = 0
+    frame_indicator = 0
+    delta = 0
+    
+    while True:
+        # get frame
+        ret, frame = cap.read()
+        # convert to grayscale
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    cv2.imshow('frame',frame)
+        if len(key_frame) == 0:
+            key_frame = gray
 
-    handle_inputs()
+        cv2.imshow('frame',frame)
 
-    # if we have auto enabled
-    if auto:
-        # calculating the delta from the keyframe
-        (delta, diff) = compare_ssim(key_frame, gray, full=True)
-        if delta <= 0.82:
-            # if there is not already a caption
-            # print(caption)
-            if len(caption) == 0:
-                # if there is a previous frame
-                if len(last_frame) > 0:
-                    # calculating delta value from last to current frame
-                    (cur_delta, diff) = compare_ssim(gray, last_frame, full=True)
-                    # if the last 2 deltas go over a threshold
-                    if last_delta > 0 and (cur_delta + last_delta) > 1.69:
-                        take_picture()
-                    # saving the last delta
-                    last_delta = cur_delta
-                # saving previous frame
-                last_frame = gray
-        else:
-            # resetting frame values
-            last_frame = []
-            caption = [] 
-            last_delta = 0
+        handle_inputs()
 
-    cv2.waitKey(1)
+        # if we have auto enabled
+        if auto:
+            # Check if delta should be updated
+            if(frame_indicator % DELTA_FREQUENCY == 0):
+                # calculating the delta from the keyframe
+                (new_delta, diff) = compare_ssim(key_frame, gray, full=True)
+                delta = new_delta
+                frame_indicator = 0
+            if delta <= KEYFRAME_DELTA_SENSITIVITY:
+                    # if there is a previous frame and if there is not already a image
+                    if len(last_frame) > 0 and len(image) == 0:
+                        # calculating delta value from last to current frame
+                        (cur_delta, diff) = compare_ssim(gray, last_frame, full=True)
+                        # if the last 2 deltas go over a threshold
+                        print(cur_delta + last_delta)   
+                        if (cur_delta + last_delta) > MOVEMENT_SENSITIVITY:
+                            take_picture()
+                        # saving the last delta
+                        last_delta = cur_delta
+                    # saving previous frame
+                    last_frame = gray
+            else:
+                # resetting frame values
+                last_frame = []
+                image = [] 
+                last_delta = 0
+            frame_indicator += 1
 
-cap.release()
-cv2.destroyAllWindows()
+        cv2.waitKey(1)
+
+    cap.release()
+    cv2.destroyAllWindows()
