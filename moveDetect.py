@@ -13,23 +13,17 @@ def take_picture():
     # converting color output
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    plt.imshow(image)
-    plt.show()
+    # plt.imshow(image)
+    # plt.show()
 
 def handle_inputs():
     global auto
     global key_frame
 
-    if keyboard.is_pressed('a'):
-        auto = not auto
-        
-        if auto:
-            print("AUTO - activated")
-            key_frame = gray
-            print("key_frame reset")
-        else:
-            print("AUTO - deactivated")
-        time.sleep(0.3)
+    if keyboard.is_pressed('r'):
+        key_frame = gray
+        print("Keyframe reset")
+        time.sleep(0.4)
 
     if keyboard.is_pressed("q"):
         cap.release()
@@ -44,7 +38,7 @@ def handle_inputs():
 
 if __name__ == "__main__":
     # Constants
-    DELTA_FREQUENCY = 30
+    DELTA_FREQUENCY = 60
     KEYFRAME_DELTA_SENSITIVITY = 0.82 
     MOVEMENT_SENSITIVITY = 1.91
 
@@ -83,18 +77,18 @@ if __name__ == "__main__":
                 delta = new_delta
                 frame_indicator = 0
             if delta <= KEYFRAME_DELTA_SENSITIVITY:
-                    # if there is a previous frame and if there is not already a image
-                    if len(last_frame) > 0 and len(image) == 0:
-                        # calculating delta value from last to current frame
-                        (cur_delta, diff) = compare_ssim(gray, last_frame, full=True)
-                        # if the last 2 deltas go over a threshold
-                        print(cur_delta + last_delta)   
-                        if (cur_delta + last_delta) > MOVEMENT_SENSITIVITY:
-                            take_picture()
-                        # saving the last delta
-                        last_delta = cur_delta
-                    # saving previous frame
-                    last_frame = gray
+                # if there is a previous frame and if there is not already a image
+                if len(last_frame) > 0 and len(image) == 0:
+                    # calculating delta value from last to current frame
+                    (cur_delta, diff) = compare_ssim(gray, last_frame, full=True)
+                    # if the last 2 deltas go over a threshold
+                    #print(cur_delta + last_delta)   
+                    if (cur_delta + last_delta) > MOVEMENT_SENSITIVITY:
+                        take_picture()
+                    # saving the last delta
+                    last_delta = cur_delta
+                # saving previous frame
+                last_frame = gray
             else:
                 # resetting frame values
                 last_frame = []
