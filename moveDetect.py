@@ -76,14 +76,14 @@ while True:
                 # if there is a previous frame
                 if len(last_frame) > 0:
                     # calculating delta value from last to current frame
-                    (cur_delta, diff) = compare_ssim(frame, last_frame, full=True, multichannel=True)
+                    (cur_delta, diff) = compare_ssim(gray, last_frame, full=True)
                     # if the last 2 deltas go over a threshold
                     if last_delta > 0 and (cur_delta + last_delta) > 1.69:
                         take_picture()
                     # saving the last delta
                     last_delta = cur_delta
                 # saving previous frame
-                last_frame = frame
+                last_frame = gray
         else:
             # resetting frame values
             last_frame = []
