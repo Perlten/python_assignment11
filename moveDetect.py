@@ -13,8 +13,8 @@ def take_picture():
     # converting color output
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    # plt.imshow(image)
-    # plt.show()
+    plt.imshow(image)
+    plt.show()
 
 def handle_inputs():
     global auto
@@ -38,7 +38,7 @@ def handle_inputs():
 
 if __name__ == "__main__":
     # Constants
-    DELTA_FREQUENCY = 60
+    DELTA_FREQUENCY = 30
     KEYFRAME_DELTA_SENSITIVITY = 0.82 
     MOVEMENT_SENSITIVITY = 1.91
 
@@ -81,8 +81,8 @@ if __name__ == "__main__":
                 if len(last_frame) > 0 and len(image) == 0:
                     # calculating delta value from last to current frame
                     (cur_delta, diff) = compare_ssim(gray, last_frame, full=True)
+                    print(cur_delta + last_delta)   
                     # if the last 2 deltas go over a threshold
-                    #print(cur_delta + last_delta)   
                     if (cur_delta + last_delta) > MOVEMENT_SENSITIVITY:
                         take_picture()
                     # saving the last delta
