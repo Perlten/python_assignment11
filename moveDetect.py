@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from skimage.measure import compare_ssim
 import time
 import sys
+import fruitDetect as fd
 
 def take_picture():
     # making sure to use the global image variable 
@@ -13,8 +14,9 @@ def take_picture():
     # converting color output
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    plt.imshow(image)
-    plt.show()
+    fd.detect_fruit(image)
+    # plt.imshow(image)
+    # plt.show()
 
 def handle_inputs():
     global auto
