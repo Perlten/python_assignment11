@@ -43,7 +43,7 @@ def detect_fruit(image):
     print(np.argmax(prediction))  
 
 if __name__ == "__main__":
-    train_filelist = glob.glob('dataset4/train/*')
+    train_filelist = glob.glob('dataset6/train/*')
     train_label_list = [name.split("_")[0].split("/")[-1] for name in train_filelist]
     x_train = import_images(train_filelist)
     y_train = make_labels(train_label_list)
