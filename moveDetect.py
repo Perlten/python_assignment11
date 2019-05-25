@@ -5,7 +5,9 @@ from matplotlib import pyplot as plt
 from skimage.measure import compare_ssim
 import time
 import sys
-import fruitDetect as fd
+import copy
+
+from PIL import ImageFont, ImageDraw, Image
 
 def take_picture():
     # making sure to use the global image variable 
@@ -14,13 +16,11 @@ def take_picture():
     # converting color output
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    fd.detect_fruit(image)
-    # plt.imshow(image)
-    # plt.show()
+    plt.imshow(image)
+    plt.show()
 
 def handle_inputs():
-    global auto
-    global key_frame
+    global auto, key_frame, found_confirmed, time_found, type_found
 
     if keyboard.is_pressed('r'):
         key_frame = gray
@@ -35,8 +35,49 @@ def handle_inputs():
     if keyboard.is_pressed(" "):
         take_picture()
         time.sleep(0.4)
+    
+    if keyboard.is_pressed("y"):
+        if type_found:
+            found_confirmed = True
+            time_found = None
 
+    
+    if keyboard.is_pressed("n"):
+        type_found = None
+        found_confirmed = False
+        time_found = None
 
+def display_content():
+    global frame, f_width, f_height, type_found, prices, found_confirmed, label_height, label_width, time_found
+    dframe = copy.copy(frame)
+
+    font = cv2.FONT_HERSHEY_COMPLEX
+
+    display_found = type_found
+    indent = 100
+    if not found_confirmed:
+        display_found = f"Is this: {type_found}?"
+        indent = 250
+        
+        if time_found:
+            counter = int((time_found + 5) - time.time())
+            if counter < 0:
+                found_confirmed = True
+                time_found = None
+            else:
+                cv2.putText(dframe, str(counter), (int(f_width / 2) - 40,100), font, 4, (255,255,255), 5, cv2.LINE_AA)
+
+    if type_found:
+        cv2.putText(dframe, display_found, (int(f_width/2) - indent,(f_height-50)), font, 2, (255,255,255), 5, cv2.LINE_AA)
+
+    y_delta = 0
+    for price in prices:
+        cv2.rectangle(dframe, (10,10 + y_delta), (200,label_height + 10 + y_delta), (0,255,255), -1)
+        cv2.putText(dframe, price[1], (15,35 + y_delta), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
+        cv2.putText(dframe, f"{price[0]} kr", (15,80 + y_delta), font, 1.4, (0,0,0), 2, cv2.LINE_AA)
+        y_delta += label_height + 10
+
+    return dframe
 
 if __name__ == "__main__":
     # Constants
@@ -56,6 +97,16 @@ if __name__ == "__main__":
     last_delta = 0
     frame_indicator = 0
     delta = 0
+
+    # displays
+    type_found = "apple"
+    time_found = time.time()
+    found_confirmed = False
+    prices = [(3,"Kwickly", "https://adamlass.com/"), (4, "https://b.dk/"), (6, "Irma"), (7,"c.dk")]
+
+    # selection
+    selected = 0
+
     
     while True:
         # get frame
@@ -65,8 +116,17 @@ if __name__ == "__main__":
 
         if len(key_frame) == 0:
             key_frame = gray
+            
+            # helpers
+            f_width = frame.shape[1]
+            f_height = frame.shape[0]
+            label_height = int(f_height/8)
+            label_width = int(f_width/6)
+            print(time_found)
 
-        cv2.imshow('frame',frame)
+        dframe = display_content()
+
+        cv2.imshow('frame',dframe)
 
         handle_inputs()
 
