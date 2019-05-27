@@ -7,6 +7,7 @@ import time
 import sys
 import copy
 import webbrowser
+from fruitDetect import detect_fruit
 # from multiprocessing import Process
 
 from PIL import ImageFont, ImageDraw, Image
@@ -18,8 +19,15 @@ def take_picture():
     # converting color output
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    # plt.imshow(image)
-    # plt.show()
+    return image
+
+def predict_picture():
+    global type_found, time_found, found_confirmed
+
+    picture_taken = take_picture()
+    type_found = detect_fruit(image)
+    time_found = time.time()
+    found_confirmed = False
 
 def handle_inputs():
     global auto, key_frame, found_confirmed, time_found, type_found, selected, prices
@@ -35,7 +43,7 @@ def handle_inputs():
         sys.exit(-1)
 
     if keyboard.is_pressed(" "):
-        take_picture()
+        predict_picture()
         time.sleep(0.4)
 
     if keyboard.is_pressed("y"):
@@ -91,13 +99,13 @@ def display_content():
     if type_found:
         # Generate type text depending on confirmation
         display_found = type_found
-        indent = 100
+        indent = 80
         if not found_confirmed:
             display_found = f"Is this: {type_found}?"
-            indent = 250
+            indent = 180
 
         # Displaying type text 
-        cv2.putText(dframe, display_found, (int(f_width/2) - indent, (f_height-50)), font, 2, (255,255,255), 5, cv2.LINE_AA)
+        cv2.putText(dframe, display_found, (int(f_width/2) - indent, (f_height-30)), font, 1.5, (255,255,255), 5, cv2.LINE_AA)
 
     # Value for relative height position 
     height_pos = 0
@@ -111,14 +119,14 @@ def display_content():
         cv2.rectangle(dframe, (10,10 + height_pos), (200,label_height + 10 + height_pos), label_color, -1)
 
         # Display store
-        cv2.putText(dframe, price[1], (15,35 + height_pos), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
+        cv2.putText(dframe, price[1], (15,25 + height_pos), font, 0.4, (0,0,0), 1, cv2.LINE_AA)
 
         # Display price
-        cv2.putText(dframe, f"{price[0]} kr", (15,80 + height_pos), font, 1.4, (0,0,0), 1, cv2.LINE_AA)
+        cv2.putText(dframe, f"{price[0]} kr", (15,60 + height_pos), font, 1, (0,0,0), 1, cv2.LINE_AA)
 
         if 2 < len(price):
             # Display price
-            cv2.putText(dframe, ">", (label_width - 30, int(label_height / 2) + 20 + height_pos), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
+            cv2.putText(dframe, ">", (label_width + 70, int(label_height / 2) + 20 + height_pos), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
 
         # Append height_pos
         height_pos += label_height + 10
@@ -197,7 +205,7 @@ if __name__ == "__main__":
                     print(cur_delta + last_delta)   
                     # if the last 2 deltas go over a threshold
                     if (cur_delta + last_delta) > MOVEMENT_SENSITIVITY:
-                        take_picture()
+                        predict_picture()
                     # saving the last delta
                     last_delta = cur_delta
                 # saving previous frame
