@@ -6,6 +6,8 @@ from skimage.measure import compare_ssim
 import time
 import sys
 import copy
+import webbrowser
+
 
 from PIL import ImageFont, ImageDraw, Image
 
@@ -16,11 +18,11 @@ def take_picture():
     # converting color output
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     print("picture taken!")
-    plt.imshow(image)
-    plt.show()
+    # plt.imshow(image)
+    # plt.show()
 
 def handle_inputs():
-    global auto, key_frame, found_confirmed, time_found, type_found
+    global auto, key_frame, found_confirmed, time_found, type_found, selected, prices
 
     if keyboard.is_pressed('r'):
         key_frame = gray
@@ -47,35 +49,79 @@ def handle_inputs():
         found_confirmed = False
         time_found = None
 
+    if len(prices) > 0:
+        if keyboard.is_pressed("up"):
+            selected -= 1
+            if selected < 0:
+                selected = 0
+
+        if keyboard.is_pressed("down"):
+            selected += 1
+            if selected > (len(prices) - 1):
+                selected = (len(prices) - 1)
+        
+        if keyboard.is_pressed("enter"):
+            if 2 < len(prices[selected]):
+                webbrowser.open(prices[selected][2])
+            
+            
+
 def display_content():
-    global frame, f_width, f_height, type_found, prices, found_confirmed, label_height, label_width, time_found
+    global frame, f_width, f_height, type_found, prices, found_confirmed, label_height, label_width, time_found, selected
+    
+    # copying frame
     dframe = copy.copy(frame)
 
     font = cv2.FONT_HERSHEY_COMPLEX
 
-    display_found = type_found
-    indent = 100
-    if not found_confirmed:
-        display_found = f"Is this: {type_found}?"
-        indent = 250
-        
+    if not found_confirmed: 
         if time_found:
+            # Calculate time remaining for countdown
             counter = int((time_found + 5) - time.time())
+            
+            # If it goes under zero, accept the type found
             if counter < 0:
                 found_confirmed = True
                 time_found = None
+            # If not, display the counter
             else:
                 cv2.putText(dframe, str(counter), (int(f_width / 2) - 40,100), font, 4, (255,255,255), 5, cv2.LINE_AA)
 
+    
     if type_found:
-        cv2.putText(dframe, display_found, (int(f_width/2) - indent,(f_height-50)), font, 2, (255,255,255), 5, cv2.LINE_AA)
+        # Generate type text depending on confirmation
+        display_found = type_found
+        indent = 100
+        if not found_confirmed:
+            display_found = f"Is this: {type_found}?"
+            indent = 250
 
-    y_delta = 0
-    for price in prices:
-        cv2.rectangle(dframe, (10,10 + y_delta), (200,label_height + 10 + y_delta), (0,255,255), -1)
-        cv2.putText(dframe, price[1], (15,35 + y_delta), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
-        cv2.putText(dframe, f"{price[0]} kr", (15,80 + y_delta), font, 1.4, (0,0,0), 2, cv2.LINE_AA)
-        y_delta += label_height + 10
+        # Displaying type text 
+        cv2.putText(dframe, display_found, (int(f_width/2) - indent, (f_height-50)), font, 2, (255,255,255), 5, cv2.LINE_AA)
+
+    # Value for relative height position 
+    height_pos = 0
+    for key, price in enumerate(prices):
+        # If the current price is the selected one, display the background color as white
+        label_color = (0,255,255)
+        if key == selected:
+            label_color = (255,255,255)
+        
+        # Draw background
+        cv2.rectangle(dframe, (10,10 + height_pos), (200,label_height + 10 + height_pos), label_color, -1)
+
+        # Display store
+        cv2.putText(dframe, price[1], (15,35 + height_pos), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
+
+        # Display price
+        cv2.putText(dframe, f"{price[0]} kr", (15,80 + height_pos), font, 1.4, (0,0,0), 1, cv2.LINE_AA)
+
+        if 2 < len(price):
+            # Display price
+            cv2.putText(dframe, ">", (label_width - 30, int(label_height / 2) + 20 + height_pos), font, 0.7, (0,0,0), 1, cv2.LINE_AA)
+
+        # Append height_pos
+        height_pos += label_height + 10
 
     return dframe
 
@@ -102,7 +148,7 @@ if __name__ == "__main__":
     type_found = "apple"
     time_found = time.time()
     found_confirmed = False
-    prices = [(3,"Kwickly", "https://adamlass.com/"), (4, "https://b.dk/"), (6, "Irma"), (7,"c.dk")]
+    prices = [(3,"Kwickly", "https://kwickly.dk/"), (4, "Netto"), (6, "Irma", "https://irma.dk/"), (2,"Fakta", "https://fakta.dk/")]
 
     # selection
     selected = 0
@@ -114,6 +160,7 @@ if __name__ == "__main__":
         # convert to grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+        # first frame
         if len(key_frame) == 0:
             key_frame = gray
             
@@ -122,7 +169,7 @@ if __name__ == "__main__":
             f_height = frame.shape[0]
             label_height = int(f_height/8)
             label_width = int(f_width/6)
-            print(time_found)
+            print("resolution: ", time_found)
 
         dframe = display_content()
 
