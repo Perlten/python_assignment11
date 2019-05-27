@@ -7,7 +7,7 @@ import time
 import sys
 import copy
 import webbrowser
-
+# from multiprocessing import Process
 
 from PIL import ImageFont, ImageDraw, Image
 
@@ -37,13 +37,13 @@ def handle_inputs():
     if keyboard.is_pressed(" "):
         take_picture()
         time.sleep(0.4)
-    
+
     if keyboard.is_pressed("y"):
         if type_found:
             found_confirmed = True
             time_found = None
 
-    
+
     if keyboard.is_pressed("n"):
         type_found = None
         found_confirmed = False
@@ -152,11 +152,15 @@ if __name__ == "__main__":
 
     # selection
     selected = 0
-
+    
+    # p = Process(target=handle_inputs)
+    # p.start()
     
     while True:
         # get frame
         ret, frame = cap.read()
+
+        frame = cv2.resize(frame, (640,480))
         # convert to grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -207,5 +211,6 @@ if __name__ == "__main__":
 
         cv2.waitKey(1)
 
+    # p.join()
     cap.release()
     cv2.destroyAllWindows()
