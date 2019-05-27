@@ -20,31 +20,44 @@ def resize(image, new_dim):
 def make_labels(label_list):
     y_train = []
     for x in label_list:
-        if x == "apple":
-            y_train.append(0)
-        if x == "banana":
-            y_train.append(1)
-        if x == "orange":
-            y_train.append(2)
+        y_train.append(get_index_from_type(x))
     y_train = np.asarray(y_train)
     return y_train
+
+def get_index_from_type(fruit_type:str):
+    global fruit_labels
+
+    for key, label in enumerate(fruit_labels):
+        if label == fruit_type:
+            return key
+
 
 def import_images(filelist):
     num_image = np.array([cv2.cvtColor(cv2.imread(fname), cv2.COLOR_BGR2RGB) for fname in filelist])
     return np.asarray([resize(image, IMAGE_SIZE) for image in num_image])
 
 def detect_fruit(image):
-    # image = detect_foreground(image)
+    global fruit_labels
+
     image = resize(image, IMAGE_SIZE)
     image = tf.keras.utils.normalize(image, axis=1)
     image = np.asarray([[image]])
     prediction = MODEL.predict(image)
-    print(prediction)  
-    print(np.argmax(prediction))  
+    return fruit_labels[np.argmax(prediction)]
 
-if __name__ == "__main__":
+def load_labels():
     train_filelist = glob.glob('dataset6/train/*')
     train_label_list = [name.split("_")[0].split("/")[-1] for name in train_filelist]
+    return np.unique(train_label_list)
+
+
+if __name__ == "__main__":
+    global train_filelist, train_label_list
+    fruit_labels = load_labels()
+
+    train_filelist = glob.glob('dataset6/train/*')
+    train_label_list = [name.split("_")[0].split("/")[-1] for name in train_filelist]
+    fruit_labels = np.unique(train_label_list)
     x_train = import_images(train_filelist)
     y_train = make_labels(train_label_list)
 
@@ -76,3 +89,5 @@ if __name__ == "__main__":
     #     pred_label = np.argmax(predictions[x])
     #     print("The label was:", pred_label, "and was", test_label_list[x])
     model.save("fruitDetectModel.h5")
+else:
+    fruit_labels = load_labels()
